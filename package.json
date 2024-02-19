@@ -1,0 +1,11 @@
+{
+  "name": "pep-penguin-chat",
+  "version": "0.0.1",
+  "description": "the pep penguin chat server",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "weather-js": "^2.0.0"
+  }
+}

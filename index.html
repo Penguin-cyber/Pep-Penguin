@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="j.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Pep Penguin</title>
+
+    <!-- map stuff -->
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="docs/images/favicon.ico"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+  </head>
+  <body>
+    <img
+    src=https://static.vecteezy.com/system/resources/previews/008/358/849/original/penguin-snowboarder-at-jump-penguin-sportsman-cartoon-illustration-vector.jpg
+    alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px; float:
+    left;" />
+    <h1 style="display: inline; margin-left: 15px">Pep Penguin</h1>
+    <p class="sub">
+      Home to keen enjoyers of snow!
+      <span style="float: right"> Created by Gerald Li and Mengyang Yu</span>
+    </p>
+    <hr />
+    <div id="welcomeHeader">
+      <span id="welcome" class="sub"></span>
+      <button id="back" class="back" onclick="back()">Back</button>
+      <button id="back" class="back" onclick="toggleMode()">
+        Toggle Light/Dark
+      </button>
+      <br />
+      <hr />
+    </div>
+
+    <!-- start screen -->
+    <section id="init">
+      <h2>Select Username</h2>
+      <form id="login" action="">
+        <input type="text" id="username" />
+        <button type="submit">Log In</button>
+      </form>
+    </section>
+
+    <!-- Select Screen -->
+    <section id="sel" style="display: none">
+      <h1 style="text-align: center">Main Menu</h1>
+      <table class="sele">
+        <tr>
+          <th onclick="news()">Weather</th>
+          <th onclick="Penguin()">Daily Penguin Fact!</th>
+          <th onclick="forums()">Pep Forums</th>
+        </tr>
+      </table>
+      <br />
+    </section>
+
+    <!-- News and Weather -->
+    <section id="nw" style="display: none">
+      <h1 style="text-align: center">Weather Forecast</h1>
+      <p id="forecast"></p>
+      <img
+      src=https://png.pngtree.com/png-vector/20220814/ourmid/pngtree-penguin-on-skis-cartoon-baby-polar-vector-png-image_33206816.png
+      alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;"/>
+      <table class="fc">
+        <tr>
+          <th id="tdh"></th>
+          <th id="day1h"></th>
+          <th id="day2h"></th>
+          <th id="day3h"></th>
+          <th id="day4h"></th>
+        </tr>
+        <tr>
+          <td id="today"></td>
+          <td id="day1"></td>
+          <td id="day2"></td>
+          <td id="day3"></td>
+          <td id="day4"></td>
+        </tr>
+      </table>
+      <br />
+    </section>
+
+    <!-- Forum -->
+    <section id="chat" style="display: none">
+      <h1 id="show" style="display: inline">Pep Forums</h1>
+      <hr />
+      <b> Posts: </b>
+
+      <div style="align-content: center">
+        <button id="createPost" class="back" onclick="createPost()">
+          Create Post
+        </button>
+      </div>
+      <br />
+      <p class="postSub" style="display: none" id="requireTi">
+        A post title is required
+      </p>
+      <section id="sendpost" style="display: none">
+        <form id="form">
+          <div>
+            <p>Title:</p>
+            <input id="title" type="text" style="width: 900px" />
+            <p>Post content:</p>
+            <input id="message" type="text" style="width: 900px" />
+            <button type="submit">Post!</button>
+          </div>
+        </form>
+      </section>
+      <section id="posts" style="display: block"></section>
+      <br />
+    </section>
+
+    <!-- penguin facts -->
+    <section id="pengu" style="display: none">
+      <div>
+        <h1 style="text-align: center">Daily Penguin Fact!</h1>
+        <p style="text-align: center">
+          Your daily penguin is: the Gentoo Penguin! Gentoo penguins have been
+          known to make as many as 450 dives per day to forage for food.
+        </p>
+        <img
+        src=https://cdn.download.ams.birds.cornell.edu/api/v1/asset/115369831/1800
+        alt="Avatar" style="width: 1200px; height: 900px; margin: auto; display:
+        block;"/>
+      </div>
+      <br />
+    </section>
+
+    <!-- Map -->
+    <div
+      id="map"
+      style="
+        width: 1600px;
+        height: 900px;
+        position: relative;
+        outline-style: none;
+        margin: auto;
+        display: none;
+      "
+      class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"
+      tabindex="0"
+    >
+      <div
+        class="leaflet-pane leaflet-map-pane"
+        style="transform: translate3d(262px, -17px, 0px)"
+      >
+        <div class="leaflet-pane leaflet-tile-pane">
+          <div class="leaflet-layer" style="z-index: 1; opacity: 1">
+            <div
+              class="leaflet-tile-container leaflet-zoom-animated"
+              style="
+                z-index: 17;
+                transform: translate3d(143px, 156px, 0px) scale(0.25);
+              "
+            ></div>
+            <div
+              class="leaflet-tile-container leaflet-zoom-animated"
+              style="
+                z-index: 19;
+                transform: translate3d(0px, 0px, 0px) scale(1);
+              "
+            >
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/2/2.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-209px, 127px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/3/2.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(47px, 127px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/2/1.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-209px, -129px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/3/1.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(47px, -129px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/2/3.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-209px, 383px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/3/3.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(47px, 383px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/1/2.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-465px, 127px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/0/2.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(303px, 127px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/1/1.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-465px, -129px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/0/1.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(303px, -129px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/1/3.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(-465px, 383px, 0px);
+                  opacity: 1;
+                "
+              />
+              <img
+                alt=""
+                src="https://tile.openstreetmap.org/2/0/3.png"
+                class="leaflet-tile leaflet-tile-loaded"
+                style="
+                  width: 256px;
+                  height: 256px;
+                  transform: translate3d(303px, 383px, 0px);
+                  opacity: 1;
+                "
+              />
+            </div>
+          </div>
+        </div>
+        <div class="leaflet-pane leaflet-overlay-pane">
+          <svg
+            pointer-events="none"
+            class="leaflet-zoom-animated"
+            width="720"
+            height="480"
+            viewBox="-322 -23 720 480"
+            style="transform: translate3d(-322px, -23px, 0px)"
+          >
+            <g>
+              <path
+                class="leaflet-interactive"
+                stroke="red"
+                stroke-opacity="1"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="#f03"
+                fill-opacity="0.5"
+                fill-rule="evenodd"
+                d="M0 0"
+              ></path>
+              <path
+                class="leaflet-interactive"
+                stroke="#3388ff"
+                stroke-opacity="1"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="#3388ff"
+                fill-opacity="0.2"
+                fill-rule="evenodd"
+                d="M0 0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="leaflet-pane leaflet-shadow-pane">
+          <img
+            src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+            class="leaflet-marker-shadow leaflet-zoom-animated"
+            alt=""
+            style="
+              margin-left: -12px;
+              margin-top: -41px;
+              width: 41px;
+              height: 41px;
+              transform: translate3d(815px, -44px, 0px);
+            "
+          />
+        </div>
+        <div class="leaflet-pane leaflet-marker-pane">
+          <img
+            src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+            class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive"
+            alt="Marker"
+            tabindex="0"
+            role="button"
+            style="
+              margin-left: -12px;
+              margin-top: -41px;
+              width: 25px;
+              height: 41px;
+              transform: translate3d(815px, -44px, 0px);
+              z-index: -44;
+            "
+          />
+        </div>
+        <div class="leaflet-pane leaflet-tooltip-pane"></div>
+        <div class="leaflet-pane leaflet-popup-pane">
+          <div
+            class="leaflet-popup leaflet-zoom-animated"
+            style="
+              opacity: 1;
+              transform: translate3d(815px, -44px, 0px);
+              bottom: -7px;
+              left: -174px;
+            "
+          >
+            <div class="leaflet-popup-content-wrapper">
+              <div class="leaflet-popup-content" style="width: 301px">
+                You clicked the map at LatLng(51.49966, -0.068493)
+              </div>
+            </div>
+            <div class="leaflet-popup-tip-container">
+              <div class="leaflet-popup-tip"></div>
+            </div>
+            <a
+              class="leaflet-popup-close-button"
+              role="button"
+              aria-label="Close popup"
+              href="#close"
+              ><span aria-hidden="true">×</span></a
+            >
+          </div>
+        </div>
+        <div
+          class="leaflet-proxy leaflet-zoom-animated"
+          style="transform: translate3d(-265px, 602px, 0px) scale(2)"
+        ></div>
+      </div>
+      <div class="leaflet-control-container">
+        <div class="leaflet-top leaflet-left">
+          <div class="leaflet-control-zoom leaflet-bar leaflet-control">
+            <a
+              class="leaflet-control-zoom-in"
+              href="#"
+              title="Zoom in"
+              role="button"
+              aria-label="Zoom in"
+              aria-disabled="false"
+              ><span aria-hidden="true">+</span></a
+            ><a
+              class="leaflet-control-zoom-out"
+              href="#"
+              title="Zoom out"
+              role="button"
+              aria-label="Zoom out"
+              aria-disabled="false"
+              ><span aria-hidden="true">−</span></a
+            >
+          </div>
+        </div>
+        <div class="leaflet-top leaflet-right"></div>
+        <div class="leaflet-bottom leaflet-left"></div>
+        <div class="leaflet-bottom leaflet-right">
+          <div class="leaflet-control-attribution leaflet-control">
+            <a
+              href="https://leafletjs.com"
+              title="A JavaScript library for interactive maps"
+              ><svg
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="8"
+                viewBox="0 0 12 8"
+                class="leaflet-attribution-flag"
+              >
+                <path fill="#4C7BE1" d="M0 0h12v4H0z"></path>
+                <path fill="#FFD500" d="M0 4h12v3H0z"></path>
+                <path fill="#E0BC00" d="M0 7h12v1H0z"></path>
+              </svg>
+              Leaflet</a
+            >
+            <span aria-hidden="true">|</span> ©
+            <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
